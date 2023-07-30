@@ -320,6 +320,87 @@ const insertOrUpdateDataItem = async (data, table) => {
   }
 };
 
+const insertOrUpdateDataDofo = async (data, table) => {
+  try {
+    const { connectionToWebDiskon, connectionToSimpi } =
+      await setupConnections();
+    console.log(data, "data");
+    const itemInventoryItemId = data.INVENTORY_ITEM_ID;
+    // Check if the outlet already exists in the database based on the outletSiteNumber
+    const checkExist = await connectionToSimpi.query(
+      `SELECT org_id FROM ${table} WHERE org_id = ?`,
+      [itemInventoryItemId]
+    );
+
+    if (checkExist && checkExist[0].length > 0) {
+      // Outlet exists, so update the data in m_outlet
+      const updateQuery = `UPDATE ${table} SET
+      itemInventoryItemId = ?,
+      itemSupId = ?,
+      itemProduk = ?,
+      itemUom = ?,
+      itemSatuanKecil = ?,
+      itemClassProduk = ?,
+      itemIDprinc = ?,
+      itemHna = ?,
+      itemClassName = ?
+            WHERE itemInventoryItemId = ?`;
+
+      const updateData = [
+        data.INVENTORY_ITEM_ID,
+        data.SUPLIER_ID,
+        data.PRODUK,
+        data.UOM,
+        data.SATUAN_KECIL,
+        data.CLASS_PROD,
+        data.PRINCIPAL,
+        data.HNA,
+        data.CLASS_NAME,
+        itemInventoryItemId,
+      ];
+
+      await connectionToSimpi.query(updateQuery, updateData);
+      console.log(
+        `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} updated successfully!`
+      );
+    } else {
+      // Outlet does not exist, so insert the data into m_outlet
+      const insertQuery = `INSERT INTO ${table} (
+        itemInventoryItemId,
+        itemCode,
+        itemSupId,
+        itemProduk,
+        itemUom,
+        itemSatuanKecil,
+        itemClassProduk,
+        itemIDprinc,
+        itemClassName,
+        itemHna
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      const insertData = [
+        data.INVENTORY_ITEM_ID,
+        data.ITEM,
+        data.SUPLIER_ID,
+        data.PRODUK,
+        data.UOM,
+        data.SATUAN_KECIL,
+        data.CLASS_PROD,
+        data.PRINCIPAL,
+        data.CLASS_NAME,
+        data.HNA,
+      ];
+
+      await connectionToSimpi.query(insertQuery, insertData);
+      console.log(
+        `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
+      );
+    }
+  } catch (err) {
+    throw new err();
+  }
+};
+
 watcher.on("ready", () => {
   console.log(`Watcher is ready and scanning files on ${source_folder}`);
   // You can optionally process existing files here if needed
@@ -385,6 +466,36 @@ watcher.on("add", async (path) => {
             console.log(`Failed to process and moved file to: ${newFileName}`);
           }
         });
+      }
+    }, 800);
+  }
+  if (fileName.toUpperCase().indexOf("DOFO_SALES_NANTI_GANTI") != -1) {
+    setTimeout(async () => {
+      try {
+        const workbook = xlsx.readFile(path, { raw: true });
+        const sheet = workbook.SheetNames[0];
+        const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+        const table = "transaksi_sales";
+        for (const data of csvData) {
+          await insertOrUpdateDataDofo(data, table);
+        }
+        const newFileName = `${success_folder}/${fileName}`;
+        // fs.rename(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while renaming after insert: ${err.message}`);
+        //   } else {
+        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
+      } catch (error) {
+        const newFileName = `${failed_folder}/${fileName}`;
+        // fs.renameSync(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while moving Failed file : ${err.message}`);
+        //   } else {
+        //     console.log(`Failed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       }
     }, 800);
   }
