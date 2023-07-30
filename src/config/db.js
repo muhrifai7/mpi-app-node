@@ -30,7 +30,6 @@ async function setupConnections() {
       server: process.env.SQL_HOST,
     });
     console.log(connectionToSqlServer, "connectionToSqlServer");
-    console.log("Connected to Sql Server database!");
     return { connectionToWebDiskon, connectionToSimpi, connectionToSqlServer };
   } catch (err) {
     console.error("Error connecting to databases:", err);

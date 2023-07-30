@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3002;
+import "./api/helpers/scheduler.js";
 
 // Middleware to parse incoming JSON data
 app.use(

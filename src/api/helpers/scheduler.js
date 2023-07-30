@@ -9,9 +9,11 @@ const processedpath = process.env.PROCCESSED_FILE;
 const success_folder = `${root_folder}/${processedpath}`;
 
 const ext = ["csv"];
-
+// remove file at 0 cloack
+// import sql server to simpi every
+const periods = ["0 0 * * *", "0 3 * * * "];
 // function ini jalan setiap jam 1 pagi, untuk mengapus file dengan masa 1 hari
-const removeOldFile = schedule.scheduleJob("*/1 * * * *", async () => {
+const removeOldFile = schedule.scheduleJob(periods[0], async () => {
   const second = 60 * 60 * 30;
   const currentTime = Math.floor(new Date().getTime() / 1000);
   const files = Array.from(await fs.readdir(success_folder)).filter((file) => {
@@ -29,10 +31,9 @@ const removeOldFile = schedule.scheduleJob("*/1 * * * *", async () => {
   console.log(`This runs at 00:00AM every day, Clean data on ${processedpath}`);
 });
 
-// schedule.scheduleJob("*/1 * * * *", async () => {
-//   const resRayon = await importDataRayonToSimpi();
-//   console.log(resRayon, "resRayon");
-// });
+schedule.scheduleJob(periods[1], async () => {
+  await importDataRayonToSimpi();
+});
 
 // Insert to table rayon Db ke simpe_test
 const importDataRayonToSimpi = async () => {
@@ -83,4 +84,4 @@ const importDataRayonToSimpi = async () => {
   }
 };
 
-console.log(await importDataRayonToSimpi());
+console.log(await importDataRayonToSimpi(), "test-nanti-hapus");
