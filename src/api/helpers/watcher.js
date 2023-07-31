@@ -18,10 +18,13 @@ const watcher = chokidar.watch(`${source_folder}`, {
   ignoreInitial: false,
 });
 
-const insertOrUpdateDataOutlet = async (data, table) => {
+const insertOrUpdateDataOutlet = async (
+  data,
+  table,
+  poolToWebDiskon,
+  poolToSimpi
+) => {
   try {
-    const { poolToWebDiskon, poolToSimpi } = await setupConnections();
-
     const outletSiteNumber = data.OUTLETSITENUMBER;
     // Check if the outlet already exists in the database based on the outletSiteNumber
     const checkExist = await poolToSimpi.query(
@@ -171,16 +174,19 @@ const insertOrUpdateDataOutlet = async (data, table) => {
   }
 };
 
-const insertOrUpdateDataItem = async (data, table) => {
+const insertOrUpdateDataItem = async (
+  data,
+  table,
+  poolToWebDiskon,
+  poolToSimpi
+) => {
   try {
-    const { poolToWebDiskon, poolToSimpi } = await setupConnections();
     const itemInventoryItemId = data.INVENTORY_ITEM_ID;
     // Check if the outlet already exists in the database based on the outletSiteNumber
     const checkExist = await poolToSimpi.query(
       `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
       [itemInventoryItemId]
     );
-
     if (checkExist && checkExist[0].length > 0) {
       // Outlet exists, so update the data in m_outlet
       const updateQuery = `UPDATE ${table} SET
@@ -315,84 +321,44 @@ const insertOrUpdateDataItem = async (data, table) => {
   }
 };
 
-const insertOrUpdateDataDofo = async (data, table) => {
+const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
   try {
-    const { poolToSimpi } = await setupConnections();
+    const batchSize = 1000;
     // Step 1: Truncate the table
     const truncateQuery = `TRUNCATE TABLE ${table}`;
     await poolToSimpi.query(truncateQuery);
     // Step 2: Insert the new data
     const insertQuery = `INSERT INTO ${table} (
-        TGL_INVOICE,
-        YEAR,
-        BLN,
-        DAYS,
-        PERIODE,
-        JENIS,
-        NO_PERFORMA,
-        NO_INVOICE,
-        SITE_NUMBER,
-        SALES,
-        QTY,
-        OFF_PRINC,
-        OFF_MPI,
-        CNTARIK,
-        ON_MPI,
-        ON_PRIN,
-        BONUS,
-        GRUPLANG,
-        KODELANG,
-        SALES_TYPE,
-        NAMALANG,
-        ALMTLANG,
-        CITY,
-        KLSOUT,
-        PARTY_NAME,
-        NO_DPL,
-        PRICE_ID,
-        key_po_item,
-        key_po_outlet_item
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      TGL_INVOICE,
+      YEAR,
+      BLN,
+      DAYS
+    ) VALUES (?, ?, ?, ?)`;
 
-    const insertData = [
-      data.TGL_INVOICE,
-      data.YEAR,
-      data.BLN,
-      data.DAYS,
-      data.PERIODE,
-      data.JENIS,
-      data.NO_PERFORMA,
-      data.NO_INVOICE,
-      data.SITE_NUMBER,
-      data.SALES,
-      data.QTY,
-      data.OFF_PRINC,
-      data.OFF_MPI,
-      data.CNTARIK,
-      data.ON_MPI,
-      data.ON_PRIN,
-      data.BONUS,
-      data.GRUPLANG,
-      data.KODELANG,
-      data.SALES_TYPE,
-      data.NAMALANG,
-      data.ALMTLANG,
-      data.CITY,
-      data.KLSOUT,
-      data.PARTY_NAME,
-      data.NO_DPL,
-      data.PRICE_ID,
-      "",
-      "",
-    ];
+    const dataChunks = [];
+    for (let i = 0; i < data.length; i += batchSize) {
+      dataChunks.push(data.slice(i, i + batchSize));
+    }
+    // Start a transaction to improve performance
+    await poolToSimpi.query("START TRANSACTION");
+    for (const chunk of dataChunks) {
+      const insertData = chunk.map((row) => [
+        row.TGL_INVOICE,
+        row.YEAR,
+        row.BLN,
+        row.DAYS,
+      ]);
 
-    await poolToSimpi.query(insertQuery, insertData);
-    console.log(
-      `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
-    );
-    // }
+      let execQuery = await poolToSimpi.query(insertQuery, insertData);
+      console.log(execQuery, "execQuery'");
+    }
+
+    await poolToSimpi.query("COMMIT");
+
+    console.log(`Data inserted into table ${table} successfully!`);
   } catch (err) {
-    throw new err();
+    console.log(err, "err");
+    // throw new err();
   }
 };
 
@@ -402,7 +368,7 @@ watcher.on("ready", () => {
 });
 
 watcher.on("add", async (path) => {
-  console.log(path, "path");
+  const { poolToWebDiskon, poolToSimpi } = await setupConnections();
   const fileName = path.split("/").slice(-1)[0];
   if (fileName.toUpperCase().indexOf("M_OUTLET") != -1) {
     setTimeout(async () => {
@@ -412,7 +378,12 @@ watcher.on("add", async (path) => {
         const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
         const table = "m_outlet";
         for (const data of csvData) {
-          await insertOrUpdateDataOutlet(data, table);
+          await insertOrUpdateDataOutlet(
+            data,
+            table,
+            poolToWebDiskon,
+            poolToSimpi
+          );
         }
         const newFileName = `${success_folder}/${fileName}`;
         fs.rename(path, newFileName, (err) => {
@@ -442,7 +413,12 @@ watcher.on("add", async (path) => {
         const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
         const table = "m_item";
         for (const data of csvData) {
-          await insertOrUpdateDataItem(data, table);
+          await insertOrUpdateDataItem(
+            data,
+            table,
+            poolToWebDiskon,
+            poolToSimpi
+          );
         }
         const newFileName = `${success_folder}/${fileName}`;
         fs.rename(path, newFileName, (err) => {
@@ -464,33 +440,33 @@ watcher.on("add", async (path) => {
       }
     }, 800);
   }
-  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+  // bulk insert
+  if (fileName.toUpperCase().indexOf("DOFO_SALES_TEST") != -1) {
     setTimeout(async () => {
       try {
         const workbook = xlsx.readFile(path, { raw: true });
         const sheet = workbook.SheetNames[0];
         const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
         const table = "transaksi_sales";
-        for (const data of csvData) {
-          await insertOrUpdateDataDofo(data, table);
-        }
+        await insertOrUpdateDataDofo(csvData, table, poolToSimpi);
         const newFileName = `${success_folder}/${fileName}`;
-        fs.rename(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while renaming after insert: ${err.message}`);
-          } else {
-            console.log(`Succeed to process and moved file to: ${newFileName}`);
-          }
-        });
+        // fs.rename(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while renaming after insert: ${err.message}`);
+        //   } else {
+        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       } catch (error) {
+        console.log(error, "error'");
         const newFileName = `${failed_folder}/${fileName}`;
-        fs.renameSync(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while moving Failed file : ${err.message}`);
-          } else {
-            console.log(`Failed to process and moved file to: ${newFileName}`);
-          }
-        });
+        // fs.renameSync(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while moving Failed file : ${err.message}`);
+        //   } else {
+        //     console.log(`Failed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       }
     }, 800);
   }
