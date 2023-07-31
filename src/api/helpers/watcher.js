@@ -332,8 +332,33 @@ const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
       TGL_INVOICE,
       YEAR,
       BLN,
-      DAYS
-    ) VALUES (?, ?, ?, ?)`;
+      DAYS,
+      PERIODE,
+      JENIS,
+      NO_PERFORMA,
+      NO_INVOICE,
+      SITE_NUMBER,
+      SALES,
+      QTY,
+      OFF_PRINC,
+      OFF_MPI,
+      CNTARIK,
+      ON_MPI,
+      ON_PRIN,
+      BONUS,
+      GRUPLANG,
+      KODELANG,
+      SALES_TYPE,
+      NAMALANG,
+      ALMTLANG,
+      CITY,
+      KLSOUT,
+      PARTY_NAME,
+      NO_DPL,
+      ID_PRICE,
+      key_po_item,
+      key_po_outlet_item
+    ) VALUES ?`;
 
     const dataChunks = [];
     for (let i = 0; i < data.length; i += batchSize) {
@@ -347,9 +372,33 @@ const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
         row.YEAR,
         row.BLN,
         row.DAYS,
+        row.PERIODE,
+        row.JENIS,
+        row.NO_PERFORMA,
+        row.NO_INVOICE,
+        row.SITE_NUMBER,
+        row.SALES,
+        row.QTY,
+        row.OFF_PRINC,
+        row.OFF_MPI,
+        row.CNTARIK,
+        row.ON_MPI,
+        row.ON_PRIN,
+        row.BONUS,
+        row.GRUPLANG,
+        row.KODELANG,
+        row.SALES_TYPE,
+        row.NAMALANG,
+        row.ALMTLANG,
+        row.CITY,
+        row.KLSOUT,
+        row.PARTY_NAME,
+        row.NO_DPL,
+        row.PRICE_ID,
+        "",
+        "",
       ]);
-
-      let execQuery = await poolToSimpi.query(insertQuery, insertData);
+      let execQuery = await poolToSimpi.query(insertQuery, [insertData]);
       console.log(execQuery, "execQuery'");
     }
 
@@ -441,7 +490,7 @@ watcher.on("add", async (path) => {
     }, 800);
   }
   // bulk insert
-  if (fileName.toUpperCase().indexOf("DOFO_SALES_TEST") != -1) {
+  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
     setTimeout(async () => {
       try {
         const workbook = xlsx.readFile(path, { raw: true });
@@ -450,23 +499,23 @@ watcher.on("add", async (path) => {
         const table = "transaksi_sales";
         await insertOrUpdateDataDofo(csvData, table, poolToSimpi);
         const newFileName = `${success_folder}/${fileName}`;
-        // fs.rename(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while renaming after insert: ${err.message}`);
-        //   } else {
-        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
       } catch (error) {
         console.log(error, "error'");
         const newFileName = `${failed_folder}/${fileName}`;
-        // fs.renameSync(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while moving Failed file : ${err.message}`);
-        //   } else {
-        //     console.log(`Failed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
       }
     }, 800);
   }
