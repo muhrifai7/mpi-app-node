@@ -4,24 +4,26 @@ import mysql from "mysql2/promise";
 
 async function setupConnections() {
   try {
-    const connectionToWebDiskon = await mysql.createConnection({
+    const poolToWebDiskon = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME_DISKON,
+      connectionLimit: 10, // Adjust the limit as per your requirements
     });
 
     console.log("Connected to WebDiskon database!");
 
-    const connectionToSimpi = await mysql.createConnection({
+    const poolToSimpi = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
+      connectionLimit: 10, // Adjust the limit as per your requirements
     });
 
     console.log("Connected to Simpi database!");
-    return { connectionToWebDiskon, connectionToSimpi };
+    return { poolToWebDiskon, poolToSimpi };
   } catch (err) {
     console.error("Error connecting to databases:", err);
     throw err;

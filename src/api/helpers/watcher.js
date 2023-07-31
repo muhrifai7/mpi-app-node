@@ -20,12 +20,11 @@ const watcher = chokidar.watch(`${source_folder}`, {
 
 const insertOrUpdateDataOutlet = async (data, table) => {
   try {
-    const { connectionToWebDiskon, connectionToSimpi } =
-      await setupConnections();
+    const { poolToWebDiskon, poolToSimpi } = await setupConnections();
 
     const outletSiteNumber = data.OUTLETSITENUMBER;
     // Check if the outlet already exists in the database based on the outletSiteNumber
-    const checkExist = await connectionToSimpi.query(
+    const checkExist = await poolToSimpi.query(
       `SELECT id FROM ${table} WHERE outletSiteNumber = ?`,
       [outletSiteNumber]
     );
@@ -56,7 +55,7 @@ const insertOrUpdateDataOutlet = async (data, table) => {
         data.CUST_ID,
         outletId,
       ];
-      await connectionToSimpi.query(updateQuery, updateData);
+      await poolToSimpi.query(updateQuery, updateData);
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
       );
@@ -85,13 +84,13 @@ const insertOrUpdateDataOutlet = async (data, table) => {
         data.OUTLETCITY,
         data.CUST_ID,
       ];
-      await connectionToSimpi.query(insertQuery, insertData);
+      await poolToSimpi.query(insertQuery, insertData);
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
       );
     }
 
-    const checkExistDbDiskon = await connectionToWebDiskon.query(
+    const checkExistDbDiskon = await poolToWebDiskon.query(
       `SELECT outlet_id FROM ${table} WHERE outletSiteNumber = ?`,
       [outletSiteNumber]
     );
@@ -129,10 +128,7 @@ const insertOrUpdateDataOutlet = async (data, table) => {
             WHERE outlet_id = ?`;
 
       console.log(updateData, "updateData");
-      let result = await connectionToWebDiskon.query(
-        updateQueryDiskon,
-        updateData
-      );
+      let result = await poolToWebDiskon.query(updateQueryDiskon, updateData);
       console.log(result, "result");
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
@@ -165,7 +161,7 @@ const insertOrUpdateDataOutlet = async (data, table) => {
         siteNumberRefrences
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-      await connectionToWebDiskon.query(insertQueryDiskon, insertData);
+      await poolToWebDiskon.query(insertQueryDiskon, insertData);
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
       );
@@ -177,11 +173,10 @@ const insertOrUpdateDataOutlet = async (data, table) => {
 
 const insertOrUpdateDataItem = async (data, table) => {
   try {
-    const { connectionToWebDiskon, connectionToSimpi } =
-      await setupConnections();
+    const { poolToWebDiskon, poolToSimpi } = await setupConnections();
     const itemInventoryItemId = data.INVENTORY_ITEM_ID;
     // Check if the outlet already exists in the database based on the outletSiteNumber
-    const checkExist = await connectionToSimpi.query(
+    const checkExist = await poolToSimpi.query(
       `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
       [itemInventoryItemId]
     );
@@ -213,7 +208,7 @@ const insertOrUpdateDataItem = async (data, table) => {
         itemInventoryItemId,
       ];
 
-      await connectionToSimpi.query(updateQuery, updateData);
+      await poolToSimpi.query(updateQuery, updateData);
       console.log(
         `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} updated successfully!`
       );
@@ -245,12 +240,12 @@ const insertOrUpdateDataItem = async (data, table) => {
         data.HNA,
       ];
 
-      await connectionToSimpi.query(insertQuery, insertData);
+      await poolToSimpi.query(insertQuery, insertData);
       console.log(
         `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
       );
     }
-    const checkExistDbDiskon = await connectionToWebDiskon.query(
+    const checkExistDbDiskon = await poolToWebDiskon.query(
       `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
       [itemInventoryItemId]
     );
@@ -280,7 +275,7 @@ const insertOrUpdateDataItem = async (data, table) => {
         itemInventoryItemId,
       ];
 
-      await connectionToWebDiskon.query(updateQuery, updateData);
+      await poolToWebDiskon.query(updateQuery, updateData);
       console.log(
         `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} updated successfully!`
       );
@@ -310,7 +305,7 @@ const insertOrUpdateDataItem = async (data, table) => {
         data.CLASS_NAME,
       ];
 
-      await connectionToWebDiskon.query(insertQuery, insertData);
+      await poolToWebDiskon.query(insertQuery, insertData);
       console.log(
         `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
       );
@@ -322,80 +317,80 @@ const insertOrUpdateDataItem = async (data, table) => {
 
 const insertOrUpdateDataDofo = async (data, table) => {
   try {
-    const { connectionToWebDiskon, connectionToSimpi } =
-      await setupConnections();
-    console.log(data, "data");
-    const itemInventoryItemId = data.INVENTORY_ITEM_ID;
-    // Check if the outlet already exists in the database based on the outletSiteNumber
-    const checkExist = await connectionToSimpi.query(
-      `SELECT org_id FROM ${table} WHERE org_id = ?`,
-      [itemInventoryItemId]
+    const { poolToSimpi } = await setupConnections();
+    // Step 1: Truncate the table
+    const truncateQuery = `TRUNCATE TABLE ${table}`;
+    await poolToSimpi.query(truncateQuery);
+    // Step 2: Insert the new data
+    const insertQuery = `INSERT INTO ${table} (
+        TGL_INVOICE,
+        YEAR,
+        BLN,
+        DAYS,
+        PERIODE,
+        JENIS,
+        NO_PERFORMA,
+        NO_INVOICE,
+        SITE_NUMBER,
+        SALES,
+        QTY,
+        OFF_PRINC,
+        OFF_MPI,
+        CNTARIK,
+        ON_MPI,
+        ON_PRIN,
+        BONUS,
+        GRUPLANG,
+        KODELANG,
+        SALES_TYPE,
+        NAMALANG,
+        ALMTLANG,
+        CITY,
+        KLSOUT,
+        PARTY_NAME,
+        NO_DPL,
+        PRICE_ID,
+        key_po_item,
+        key_po_outlet_item
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const insertData = [
+      data.TGL_INVOICE,
+      data.YEAR,
+      data.BLN,
+      data.DAYS,
+      data.PERIODE,
+      data.JENIS,
+      data.NO_PERFORMA,
+      data.NO_INVOICE,
+      data.SITE_NUMBER,
+      data.SALES,
+      data.QTY,
+      data.OFF_PRINC,
+      data.OFF_MPI,
+      data.CNTARIK,
+      data.ON_MPI,
+      data.ON_PRIN,
+      data.BONUS,
+      data.GRUPLANG,
+      data.KODELANG,
+      data.SALES_TYPE,
+      data.NAMALANG,
+      data.ALMTLANG,
+      data.CITY,
+      data.KLSOUT,
+      data.PARTY_NAME,
+      data.NO_DPL,
+      data.PRICE_ID,
+      "",
+      "",
+    ];
+
+    await poolToSimpi.query(insertQuery, insertData);
+    console.log(
+      `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
     );
-
-    if (checkExist && checkExist[0].length > 0) {
-      // Outlet exists, so update the data in m_outlet
-      const updateQuery = `UPDATE ${table} SET
-      itemInventoryItemId = ?,
-      itemSupId = ?,
-      itemProduk = ?,
-      itemUom = ?,
-      itemSatuanKecil = ?,
-      itemClassProduk = ?,
-      itemIDprinc = ?,
-      itemHna = ?,
-      itemClassName = ?
-            WHERE itemInventoryItemId = ?`;
-
-      const updateData = [
-        data.INVENTORY_ITEM_ID,
-        data.SUPLIER_ID,
-        data.PRODUK,
-        data.UOM,
-        data.SATUAN_KECIL,
-        data.CLASS_PROD,
-        data.PRINCIPAL,
-        data.HNA,
-        data.CLASS_NAME,
-        itemInventoryItemId,
-      ];
-
-      await connectionToSimpi.query(updateQuery, updateData);
-      console.log(
-        `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} updated successfully!`
-      );
-    } else {
-      // Outlet does not exist, so insert the data into m_outlet
-      const insertQuery = `INSERT INTO ${table} (
-        itemInventoryItemId,
-        itemCode,
-        itemSupId,
-        itemProduk,
-        itemUom,
-        itemSatuanKecil,
-        itemClassProduk,
-        itemIDprinc,
-        itemClassName,
-        itemHna
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-      const insertData = [
-        data.INVENTORY_ITEM_ID,
-        data.ITEM,
-        data.SUPLIER_ID,
-        data.PRODUK,
-        data.UOM,
-        data.SATUAN_KECIL,
-        data.CLASS_PROD,
-        data.PRINCIPAL,
-        data.CLASS_NAME,
-        data.HNA,
-      ];
-
-      await connectionToSimpi.query(insertQuery, insertData);
-      console.log(
-        `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
-      );
-    }
+    // }
   } catch (err) {
     throw new err();
   }
@@ -469,7 +464,7 @@ watcher.on("add", async (path) => {
       }
     }, 800);
   }
-  if (fileName.toUpperCase().indexOf("DOFO_SALES_NANTI_GANTI") != -1) {
+  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
     setTimeout(async () => {
       try {
         const workbook = xlsx.readFile(path, { raw: true });
@@ -480,22 +475,22 @@ watcher.on("add", async (path) => {
           await insertOrUpdateDataDofo(data, table);
         }
         const newFileName = `${success_folder}/${fileName}`;
-        // fs.rename(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while renaming after insert: ${err.message}`);
-        //   } else {
-        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
       } catch (error) {
         const newFileName = `${failed_folder}/${fileName}`;
-        // fs.renameSync(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while moving Failed file : ${err.message}`);
-        //   } else {
-        //     console.log(`Failed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
       }
     }, 800);
   }
