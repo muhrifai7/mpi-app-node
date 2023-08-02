@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/app.js",
-    "watcher": "node src/api/helpers/watcher.js",
+    "watcher": "node --max-old-space-size=8192 src/api/helpers/watcher.js",
     "dev": "concurrently \"npm run start\" \"npm run watcher\""
   },
   "author": "",

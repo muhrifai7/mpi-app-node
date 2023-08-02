@@ -1,10 +1,11 @@
 import fs from "fs";
-import fsp from "fs/promises";
+import readline from "readline";
+
 import chokidar from "chokidar";
 import moment from "moment";
 import xlsx from "xlsx";
 
-import setupConnections from "../../config/db.js";
+import { getPoolToWebDiskon, getPoolToSimpi } from "../../config/db.js";
 
 const root_folder = process.env.SOURCE_FILE;
 const upload_path = process.env.UPLOAD_PATH;
@@ -13,6 +14,7 @@ const failed_path = process.env.FAILED_FILE;
 const source_folder = `${root_folder}/${upload_path}`;
 const success_folder = `${root_folder}/${processed_path}`;
 const failed_folder = `${root_folder}/${failed_path}`;
+const ROWS_PER_BATCH = 30;
 const watcher = chokidar.watch(`${source_folder}`, {
   persistent: true,
   ignoreInitial: false,
@@ -321,13 +323,9 @@ const insertOrUpdateDataItem = async (
   }
 };
 
-const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
+const insertOrUpdateDataDofo = async (dataChunks, table, poolToSimpi) => {
   try {
-    const batchSize = 1000;
-    // Step 1: Truncate the table
-    const truncateQuery = `TRUNCATE TABLE ${table}`;
-    await poolToSimpi.query(truncateQuery);
-    // Step 2: Insert the new data
+    console.log(dataChunks.length, "length");
     const insertQuery = `INSERT INTO ${table} (
       TGL_INVOICE,
       YEAR,
@@ -360,46 +358,127 @@ const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
       key_po_outlet_item
     ) VALUES ?`;
 
-    const dataChunks = [];
-    for (let i = 0; i < data.length; i += batchSize) {
-      dataChunks.push(data.slice(i, i + batchSize));
-    }
     // Start a transaction to improve performance
     await poolToSimpi.query("START TRANSACTION");
-    for (const chunk of dataChunks) {
-      const insertData = chunk.map((row) => [
-        row.TGL_INVOICE,
-        row.YEAR,
-        row.BLN,
-        row.DAYS,
-        row.PERIODE,
-        row.JENIS,
-        row.NO_PERFORMA,
-        row.NO_INVOICE,
-        row.SITE_NUMBER,
-        row.SALES,
-        row.QTY,
-        row.OFF_PRINC,
-        row.OFF_MPI,
-        row.CNTARIK,
-        row.ON_MPI,
-        row.ON_PRIN,
-        row.BONUS,
-        row.GRUPLANG,
-        row.KODELANG,
-        row.SALES_TYPE,
-        row.NAMALANG,
-        row.ALMTLANG,
-        row.CITY,
-        row.KLSOUT,
-        row.PARTY_NAME,
-        row.NO_DPL,
-        row.PRICE_ID,
-        "",
-        "",
-      ]);
-      let execQuery = await poolToSimpi.query(insertQuery, [insertData]);
-      console.log(execQuery, "execQuery'");
+    const insertData = dataChunks.map((data) => [
+      data.TGL_INVOICE,
+      data.YEAR,
+      data.BLN,
+      data.DAYS,
+      data.PERIODE,
+      data.JENIS,
+      data.NO_PERFORMA,
+      data.NO_INVOICE,
+      data.SITE_NUMBER,
+      data.SALES,
+      data.QTY,
+      data.OFF_PRINC,
+      data.OFF_MPI,
+      data.CNTARIK,
+      data.ON_MPI,
+      data.ON_PRIN,
+      data.BONUS,
+      data.GRUPLANG,
+      data.KODELANG,
+      data.SALES_TYPE,
+      data.NAMALANG,
+      data.ALMTLANG,
+      data.CITY,
+      data.KLSOUT,
+      data.PARTY_NAME,
+      data.NO_DPL,
+      data.PRICE_ID,
+      "",
+      "",
+    ]);
+    let execQuery = await poolToSimpi.query(insertQuery, [insertData]);
+    console.log(execQuery, "execQuery");
+
+    await poolToSimpi.query("COMMIT");
+
+    console.log(`Data inserted into table ${table} successfully!`);
+  } catch (err) {
+    console.log(err, "err");
+    // throw new err();
+  }
+};
+
+const insertBulkData = async (dataChunks, table, poolToSimpi) => {
+  try {
+    console.log(dataChunks.length, "length");
+    const insertQuery = `INSERT INTO ${table} (
+      TGL_INVOICE,
+      YEAR,
+      BLN,
+      DAYS,
+      PERIODE,
+      JENIS,
+      NO_PERFORMA,
+      NO_INVOICE,
+      SITE_NUMBER,
+      SALES,
+      QTY,
+      OFF_PRINC,
+      OFF_MPI,
+      CNTARIK,
+      ON_MPI,
+      ON_PRIN,
+      BONUS,
+      GRUPLANG,
+      KODELANG,
+      SALES_TYPE,
+      NAMALANG,
+      ALMTLANG,
+      CITY,
+      KLSOUT,
+      PARTY_NAME,
+      NO_DPL,
+      ID_PRICE,
+      key_po_item,
+      key_po_outlet_item
+    ) VALUES ?`;
+
+    // Start a transaction to improve performance
+    await poolToSimpi.query("START TRANSACTION");
+
+    const insertData = dataChunks.map((data) => [
+      data.TGL_INVOICE,
+      data.YEAR,
+      data.BLN,
+      data.DAYS,
+      data.PERIODE,
+      data.JENIS,
+      data.NO_PERFORMA,
+      data.NO_INVOICE,
+      data.SITE_NUMBER,
+      data.SALES,
+      data.QTY,
+      data.OFF_PRINC,
+      data.OFF_MPI,
+      data.CNTARIK,
+      data.ON_MPI,
+      data.ON_PRIN,
+      data.BONUS,
+      data.GRUPLANG,
+      data.KODELANG,
+      data.SALES_TYPE,
+      data.NAMALANG,
+      data.ALMTLANG,
+      data.CITY,
+      data.KLSOUT,
+      data.PARTY_NAME,
+      data.NO_DPL,
+      data.PRICE_ID,
+      "",
+      "",
+    ]);
+
+    const ROWS_PER_BATCH = 1000; // Adjust this based on your preference
+
+    for (let i = 0; i < insertData.length; i += ROWS_PER_BATCH) {
+      const chunk = insertData.slice(i, i + ROWS_PER_BATCH);
+      let execQuery = await poolToSimpi.query(insertQuery, [chunk]);
+      console.log(execQuery, "execQuery");
     }
 
     await poolToSimpi.query("COMMIT");
@@ -413,11 +492,12 @@ const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
 
 watcher.on("ready", () => {
   console.log(`Watcher is ready and scanning files on ${source_folder}`);
-  // You can optionally process existing files here if needed
 });
 
 watcher.on("add", async (path) => {
-  const { poolToWebDiskon, poolToSimpi } = await setupConnections();
+  const poolToWebDiskon = await getPoolToWebDiskon();
+  const poolToSimpi = await getPoolToSimpi();
+
   const fileName = path.split("/").slice(-1)[0];
   if (fileName.toUpperCase().indexOf("M_OUTLET") != -1) {
     setTimeout(async () => {
@@ -493,32 +573,187 @@ watcher.on("add", async (path) => {
   if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
     setTimeout(async () => {
       try {
-        const workbook = xlsx.readFile(path, { raw: true });
-        const sheet = workbook.SheetNames[0];
-        const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+        let rowCount = 0;
+        let batchRows = [];
+
+        const readStream = fs.createReadStream(path, {
+          encoding: "utf8",
+          highWaterMark: 256 * 1024, // Set the buffer size to 64 KB (adjust as needed)
+        });
+
+        const rl = readline.createInterface({
+          input: readStream,
+          crlfDelay: Infinity, // To handle CRLF line endings on Windows
+        });
         const table = "transaksi_sales";
-        await insertOrUpdateDataDofo(csvData, table, poolToSimpi);
-        const newFileName = `${success_folder}/${fileName}`;
-        fs.rename(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while renaming after insert: ${err.message}`);
-          } else {
-            console.log(`Succeed to process and moved file to: ${newFileName}`);
+        const truncateQuery = `TRUNCATE TABLE ${table}`;
+        await poolToSimpi.query(truncateQuery);
+        rl.on("line", async (line) => {
+          rowCount++;
+          const data = parseCSVLine(line); // Implement this function to parse CSV lines
+          batchRows.push(data);
+          if (rowCount === ROWS_PER_BATCH) {
+            await insertOrUpdateDataDofo(batchRows, table, poolToSimpi);
+            batchRows = [];
+            rowCount = 0;
           }
+        });
+
+        rl.on("close", async () => {
+          if (batchRows.length > 0) {
+            // await insertBulkData(batchRows, table);
+            await insertOrUpdateDataDofo(batchRows, table, poolToSimpi);
+          }
+          console.log("close");
+        });
+
+        rl.on("error", (err) => {
+          console.error("Error while reading the file:", err);
+          const newFileName = `${failed_folder}/${fileName}`;
+          fs.renameSync(path, newFileName, (err) => {
+            if (err) {
+              console.log(`Error while moving Failed file : ${err.message}`);
+            } else {
+              console.log(
+                `Failed to process and moved file to: ${newFileName}`
+              );
+            }
+          });
         });
       } catch (error) {
         console.log(error, "error'");
-        const newFileName = `${failed_folder}/${fileName}`;
-        fs.renameSync(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while moving Failed file : ${err.message}`);
-          } else {
-            console.log(`Failed to process and moved file to: ${newFileName}`);
-          }
-        });
+        // const newFileName = `${failed_folder}/${fileName}`;
+        // fs.renameSync(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while moving Failed file : ${err.message}`);
+        //   } else {
+        //     console.log(`Failed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       }
     }, 800);
   }
 });
+
+const parseCSVLine = (line) => {
+  const columns = line.split(";");
+  const [
+    CABANG,
+    BRANCHID,
+    HRSO,
+    NO_INVOICE,
+    NO_PERFORMA,
+    JENIS,
+    GRUPLANG,
+    KODELANG,
+    SITE_NUMBER,
+    PARTY_NAME,
+    NAMALANG,
+    ALMTLANG,
+    KLSOUT,
+    DAYS,
+    BLN,
+    PERIODE,
+    KODE_PRODUCT,
+    PRODUK,
+    UOM,
+    KEMASAN,
+    PRINCIPAL,
+    QTY,
+    HNA,
+    SALES,
+    CLASSPROD,
+    KETKLASP,
+    IDSUP,
+    ON_MPI,
+    ONMPI,
+    ON_PRIN,
+    ONPRINC,
+    ASKES,
+    BONUS,
+    PERBONUS,
+    CN_TARIK,
+    OFFMPI,
+    NO_FDK,
+    OFFPRINC,
+    NOMORF,
+    TGLF,
+    NO_DPL,
+    OFF_MPI,
+    OFF_PRINC,
+    CNTARIK,
+    CITY,
+    TGL_INVOICE,
+    BRANCHCODE,
+    YEAR,
+    SALES_TYPE,
+    INTERFACE_LINE_ATTRIBUTE5,
+    TYPE_ORDER,
+    PO_NUMBER,
+    ONGKIR,
+    PRICE_ID,
+    ATTR1,
+    ATTR2,
+  ] = columns;
+
+  return {
+    CABANG,
+    BRANCHID,
+    HRSO,
+    NO_INVOICE,
+    NO_PERFORMA,
+    JENIS,
+    GRUPLANG,
+    KODELANG,
+    SITE_NUMBER,
+    PARTY_NAME,
+    NAMALANG,
+    ALMTLANG,
+    KLSOUT,
+    DAYS,
+    BLN,
+    PERIODE,
+    KODE_PRODUCT,
+    PRODUK,
+    UOM,
+    KEMASAN,
+    PRINCIPAL,
+    QTY,
+    HNA,
+    SALES,
+    CLASSPROD,
+    KETKLASP,
+    IDSUP,
+    ON_MPI,
+    ONMPI,
+    ON_PRIN,
+    ONPRINC,
+    ASKES,
+    BONUS,
+    PERBONUS,
+    CN_TARIK,
+    OFFMPI,
+    NO_FDK,
+    OFFPRINC,
+    NOMORF,
+    TGLF,
+    NO_DPL,
+    OFF_MPI,
+    OFF_PRINC,
+    CNTARIK,
+    CITY,
+    TGL_INVOICE,
+    BRANCHCODE,
+    YEAR,
+    SALES_TYPE,
+    INTERFACE_LINE_ATTRIBUTE5,
+    TYPE_ORDER,
+    PO_NUMBER,
+    ONGKIR,
+    PRICE_ID,
+    ATTR1,
+    ATTR2,
+  };
+};
 
 export default watcher;

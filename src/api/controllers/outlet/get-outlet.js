@@ -1,4 +1,4 @@
-import setupConnections from "../../../config/db.js";
+import { getPoolToWebDiskon, getPoolToSimpi } from "../../../config/db.js";
 
 export default async (req, res) => {
   try {

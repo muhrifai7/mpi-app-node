@@ -2,7 +2,6 @@
 import fs from "node:fs/promises";
 import path from "path";
 import schedule from "node-schedule";
-import setupConnections from "../../config/db.js";
 
 const root_folder = process.env.SOURCE_FILE;
 const processedpath = process.env.PROCCESSED_FILE;
