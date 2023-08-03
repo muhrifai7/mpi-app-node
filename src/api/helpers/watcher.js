@@ -573,6 +573,7 @@ watcher.on("add", async (path) => {
   if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
     setTimeout(async () => {
       try {
+        console.log("Reading dofo sales started");
         let rowCount = 0;
         let batchRows = [];
 
