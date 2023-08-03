@@ -493,11 +493,10 @@ const insertBulkData = async (dataChunks, table, poolToSimpi) => {
 watcher.on("ready", () => {
   console.log(`Watcher is ready and scanning files on ${source_folder}`);
 });
+const poolToWebDiskon = await getPoolToWebDiskon();
+const poolToSimpi = await getPoolToSimpi();
 
 watcher.on("add", async (path) => {
-  const poolToWebDiskon = await getPoolToWebDiskon();
-  const poolToSimpi = await getPoolToSimpi();
-
   const fileName = path.split("/").slice(-1)[0];
   if (fileName.toUpperCase().indexOf("M_OUTLET") != -1) {
     setTimeout(async () => {
@@ -581,11 +580,13 @@ watcher.on("add", async (path) => {
           encoding: "utf8",
           highWaterMark: 256 * 1024, // Set the buffer size to 64 KB (adjust as needed)
         });
-
+        console.log(readStream, "readStream");
         const rl = readline.createInterface({
           input: readStream,
           crlfDelay: Infinity, // To handle CRLF line endings on Windows
         });
+        console.log(rl, "rl");
+
         const table = "transaksi_sales";
         const truncateQuery = `TRUNCATE TABLE ${table}`;
         await poolToSimpi.query(truncateQuery);
