@@ -604,6 +604,16 @@ watcher.on("add", async (path) => {
             // await insertBulkData(batchRows, table);
             await insertOrUpdateDataDofo(batchRows, table, poolToSimpi);
           }
+          const newFileName = `${success_folder}/${fileName}`;
+          fs.rename(path, newFileName, (err) => {
+            if (err) {
+              console.log(`Error while renaming after insert: ${err.message}`);
+            } else {
+              console.log(
+                `Succeed to process and moved file to: ${newFileName}`
+              );
+            }
+          });
           console.log("close");
         });
 
