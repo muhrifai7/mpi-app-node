@@ -590,7 +590,7 @@ watcher.on("add", async (path) => {
         const table = "transaksi_sales";
         const truncateQuery = `TRUNCATE TABLE ${table}`;
         await poolToSimpi.query(truncateQuery);
-        console.log("1");
+        console.log("1", path);
         rl.on("line", async (line) => {
           console.log(rowCount, "rowCount");
           rowCount++;
