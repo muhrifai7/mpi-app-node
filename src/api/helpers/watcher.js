@@ -508,24 +508,24 @@ watcher.on("add", async (path) => {
         }
         const newFileName = `${success_folder}/${fileName}`;
         console.log(newFileName, "newFileName");
-        // fs.rename(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while renaming after insert: ${err.message}`);
-        //   } else {
-        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
       } catch (error) {
         console.log(error, "error");
-        // const newFileName = `${failed_folder}/${fileName}`;
-        // console.log(newFileName, "newFileName");
-        // fs.renameSync(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while moving Failed file : ${err.message}`);
-        //   } else {
-        //     console.log(`Failed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        const newFileName = `${failed_folder}/${fileName}`;
+        console.log(newFileName, "newFileName");
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
       }
     }, 800);
   }
@@ -565,7 +565,7 @@ watcher.on("add", async (path) => {
     }, 800);
   }
   // bulk insert
-  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+  if (fileName.toUpperCase().indexOf("DOFO_SALES_BlUM_BISA") != -1) {
     setTimeout(async () => {
       try {
         console.log("Reading dofo sales started");
@@ -602,16 +602,16 @@ watcher.on("add", async (path) => {
             // await insertBulkData(batchRows, table);
             await insertOrUpdateDataDofo(batchRows, table, poolToSimpi);
           }
-          // const newFileName = `${success_folder}/${fileName}`;
-          // fs.rename(path, newFileName, (err) => {
-          //   if (err) {
-          //     console.log(`Error while renaming after insert: ${err.message}`);
-          //   } else {
-          //     console.log(
-          //       `Succeed to process and moved file to: ${newFileName}`
-          //     );
-          //   }
-          // });
+          const newFileName = `${success_folder}/${fileName}`;
+          fs.rename(path, newFileName, (err) => {
+            if (err) {
+              console.log(`Error while renaming after insert: ${err.message}`);
+            } else {
+              console.log(
+                `Succeed to process and moved file to: ${newFileName}`
+              );
+            }
+          });
           console.log("close");
         });
 
