@@ -316,39 +316,25 @@ const insertOrUpdateDataItem = async (
   }
 };
 
-const insertOrUpdateDataDofo = async (dataChunks, table, poolToSimpi) => {
+const insertOrUpdateDataDofoProblemServer = async (
+  dataChunks,
+  table,
+  poolToSimpi
+) => {
   try {
     console.log(dataChunks.length, "length");
     const insertQuery = `INSERT INTO ${table} (
-      TGL_INVOICE,
-      YEAR,
-      BLN,
-      DAYS,
-      PERIODE,
-      JENIS,
       NO_PERFORMA,
+      TGL_INVOICE,
+      PERIODE,
       NO_INVOICE,
       SITE_NUMBER,
-      SALES,
-      QTY,
-      OFF_PRINC,
-      OFF_MPI,
-      CNTARIK,
-      ON_MPI,
-      ON_PRIN,
-      BONUS,
-      GRUPLANG,
-      KODELANG,
-      SALES_TYPE,
-      NAMALANG,
-      ALMTLANG,
-      CITY,
-      KLSOUT,
       PARTY_NAME,
-      NO_DPL,
-      ID_PRICE,
-      key_po_item,
-      key_po_outlet_item
+      DAYS,
+      QTY,
+      KODELANG,
+      SALES,
+      SALES_TYPE
     ) VALUES ?`;
 
     // Start a transaction to improve performance
@@ -396,84 +382,54 @@ const insertOrUpdateDataDofo = async (dataChunks, table, poolToSimpi) => {
   }
 };
 
-const insertBulkData = async (dataChunks, table, poolToSimpi) => {
+const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
   try {
-    console.log(dataChunks.length, "length");
+    const batchSize = 1000;
     const insertQuery = `INSERT INTO ${table} (
-      TGL_INVOICE,
-      YEAR,
-      BLN,
-      DAYS,
-      PERIODE,
-      JENIS,
       NO_PERFORMA,
+      TGL_INVOICE,
+      PERIODE,
       NO_INVOICE,
       SITE_NUMBER,
-      SALES,
-      QTY,
-      OFF_PRINC,
-      OFF_MPI,
-      CNTARIK,
-      ON_MPI,
-      ON_PRIN,
-      BONUS,
-      GRUPLANG,
-      KODELANG,
-      SALES_TYPE,
-      NAMALANG,
-      ALMTLANG,
-      CITY,
-      KLSOUT,
       PARTY_NAME,
-      NO_DPL,
-      ID_PRICE,
-      key_po_item,
-      key_po_outlet_item
+      DAYS,
+      QTY,
+      KODELANG,
+      SALES,
+      SALES_TYPE
     ) VALUES ?`;
 
+    const dataChunks = [];
+    for (let i = 0; i < data.length; i += batchSize) {
+      dataChunks.push(data.slice(i, i + batchSize));
+    }
     // Start a transaction to improve performance
     await poolToSimpi.query("START TRANSACTION");
-
-    const insertData = dataChunks.map((data) => [
-      data.TGL_INVOICE,
-      data.YEAR,
-      data.BLN,
-      data.DAYS,
-      data.PERIODE,
-      data.JENIS,
-      data.NO_PERFORMA,
-      data.NO_INVOICE,
-      data.SITE_NUMBER,
-      data.SALES,
-      data.QTY,
-      data.OFF_PRINC,
-      data.OFF_MPI,
-      data.CNTARIK,
-      data.ON_MPI,
-      data.ON_PRIN,
-      data.BONUS,
-      data.GRUPLANG,
-      data.KODELANG,
-      data.SALES_TYPE,
-      data.NAMALANG,
-      data.ALMTLANG,
-      data.CITY,
-      data.KLSOUT,
-      data.PARTY_NAME,
-      data.NO_DPL,
-      data.PRICE_ID,
-      "",
-      "",
-    ]);
-
-    const ROWS_PER_BATCH = 1000; // Adjust this based on your preference
-
-    for (let i = 0; i < insertData.length; i += ROWS_PER_BATCH) {
-      const chunk = insertData.slice(i, i + ROWS_PER_BATCH);
-      let execQuery = await poolToSimpi.query(insertQuery, [chunk]);
-      console.log(execQuery, "execQuery");
+    for (const chunk of dataChunks) {
+      const insertData = chunk.map((row) => [
+        row.NO_PERFORMA,
+        row.TGL_INVOICE,
+        row.PERIODE,
+        row.NO_INVOICE,
+        row.PARTY_NUMBER,
+        row.PARTY_NAME,
+        row.DAYS,
+        row.QTY,
+        row.KODE_PRODUCT,
+        // PRODUK,
+        // UOM,
+        // HNA,
+        row.SALES,
+        // IDSUP,
+        // NO_FDK,
+        row.SALES_TYPE,
+        // TYPE_ORDER,
+        // ONGKIR,
+        // ATTR1,
+      ]);
+      let execQuery = await poolToSimpi.query(insertQuery, [insertData]);
+      console.log(execQuery, "execQuery'");
     }
-
     await poolToSimpi.query("COMMIT");
 
     console.log(`Data inserted into table ${table} successfully!`);
@@ -508,13 +464,19 @@ watcher.on("add", async (path) => {
         }
         const newFileName = `${success_folder}/${fileName}`;
         console.log(newFileName, "newFileName");
-        fs.rename(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while renaming after insert: ${err.message}`);
-          } else {
-            console.log(`Succeed to process and moved file to: ${newFileName}`);
-          }
-        });
+        if (fs.existsSync(path)) {
+          fs.rename(path, newFileName, (err) => {
+            if (err) {
+              console.log(`Error while renaming after insert: ${err.message}`);
+            } else {
+              console.log(
+                `Succeed to process and moved file to: ${newFileName}`
+              );
+            }
+          });
+        } else {
+          console.log(`Error: The file ${path} does not exist.`);
+        }
       } catch (error) {
         console.log(error, "error");
         const newFileName = `${failed_folder}/${fileName}`;
@@ -553,6 +515,37 @@ watcher.on("add", async (path) => {
           }
         });
       } catch (error) {
+        const newFileName = `${failed_folder}/${fileName}`;
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
+      }
+    }, 800);
+  }
+  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+    setTimeout(async () => {
+      try {
+        const workbook = xlsx.readFile(path, { raw: true });
+        const sheet = workbook.SheetNames[0];
+        const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+        const table = "transaksi_sales";
+        const truncateQuery = `TRUNCATE TABLE ${table}`;
+        await poolToSimpi.query(truncateQuery);
+        await insertOrUpdateDataDofo(csvData, table, poolToSimpi);
+        const newFileName = `${success_folder}/${fileName}`;
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
+      } catch (error) {
+        console.log(error, "error'");
         const newFileName = `${failed_folder}/${fileName}`;
         fs.renameSync(path, newFileName, (err) => {
           if (err) {
