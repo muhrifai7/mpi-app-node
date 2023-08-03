@@ -590,7 +590,9 @@ watcher.on("add", async (path) => {
         const table = "transaksi_sales";
         const truncateQuery = `TRUNCATE TABLE ${table}`;
         await poolToSimpi.query(truncateQuery);
+        console.log("1");
         rl.on("line", async (line) => {
+          console.log(rowCount, "rowCount");
           rowCount++;
           const data = parseCSVLine(line); // Implement this function to parse CSV lines
           batchRows.push(data);
