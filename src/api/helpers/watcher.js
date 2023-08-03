@@ -89,6 +89,7 @@ const insertOrUpdateDataOutlet = async (
         data.OUTLETCITY,
         data.CUST_ID,
       ];
+      console.log(insertData, "insertData 1");
       await poolToSimpi.query(insertQuery, insertData);
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
@@ -132,24 +133,21 @@ const insertOrUpdateDataOutlet = async (
         siteNumberRefrences = ?
             WHERE outlet_id = ?`;
 
-      console.log(updateData, "updateData");
       let result = await poolToWebDiskon.query(updateQueryDiskon, updateData);
-      console.log(result, "result");
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
       );
     } else {
+      console.log("elssse");
       const insertData = [
         data.OUTLETSITENUMBER,
         data.BRANCHID,
         data.STATUS_OUTLET,
         data.OUTLETKLAS,
         data.OUTLETPELANGGAN,
-        // data.OUTLETKRLIMIT,
+        data.CUSTOMERNUMBER,
         data.OUTLETALAMAT,
-        data.OUTLETCODECOLL,
-        data.OUTLETCITY,
-        data.CUSTOMERID,
+        data.PARTYSITEID,
       ];
       const insertQueryDiskon = `INSERT INTO ${table} (
         outletSiteNumber,
@@ -157,22 +155,18 @@ const insertOrUpdateDataOutlet = async (
         outletStatus,
         outletKlas,
         outletPelanggan,
-        outletAlamat,
-        outletCodeColl,
-        outletCity,
-        cust_id,
         customerNumber,
-        partySiteId,
-        siteNumberRefrences
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
+        outletAlamat,
+        partySiteId
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
       await poolToWebDiskon.query(insertQueryDiskon, insertData);
       console.log(
         `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
       );
     }
   } catch (err) {
-    throw new err();
+    console.log(err, "err");
+    throw err;
   }
 };
 
@@ -257,7 +251,6 @@ const insertOrUpdateDataItem = async (
       `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
       [itemInventoryItemId]
     );
-    console.log(checkExistDbDiskon, "hayaaa");
     if (checkExistDbDiskon && checkExistDbDiskon[0].length > 0) {
       // Outlet exists, so update the data in m_outlet
       const updateQuery = `UPDATE ${table} SET
@@ -319,7 +312,7 @@ const insertOrUpdateDataItem = async (
       );
     }
   } catch (err) {
-    throw new err();
+    throw err;
   }
 };
 
@@ -399,7 +392,7 @@ const insertOrUpdateDataDofo = async (dataChunks, table, poolToSimpi) => {
     console.log(`Data inserted into table ${table} successfully!`);
   } catch (err) {
     console.log(err, "err");
-    // throw new err();
+    throw err;
   }
 };
 
@@ -514,22 +507,25 @@ watcher.on("add", async (path) => {
           );
         }
         const newFileName = `${success_folder}/${fileName}`;
-        fs.rename(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while renaming after insert: ${err.message}`);
-          } else {
-            console.log(`Succeed to process and moved file to: ${newFileName}`);
-          }
-        });
+        console.log(newFileName, "newFileName");
+        // fs.rename(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while renaming after insert: ${err.message}`);
+        //   } else {
+        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       } catch (error) {
-        const newFileName = `${failed_folder}/${fileName}`;
-        fs.renameSync(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while moving Failed file : ${err.message}`);
-          } else {
-            console.log(`Failed to process and moved file to: ${newFileName}`);
-          }
-        });
+        console.log(error, "error");
+        // const newFileName = `${failed_folder}/${fileName}`;
+        // console.log(newFileName, "newFileName");
+        // fs.renameSync(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while moving Failed file : ${err.message}`);
+        //   } else {
+        //     console.log(`Failed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       }
     }, 800);
   }
@@ -549,7 +545,6 @@ watcher.on("add", async (path) => {
           );
         }
         const newFileName = `${success_folder}/${fileName}`;
-        console.log(newFileName, "suceess");
         fs.rename(path, newFileName, (err) => {
           if (err) {
             console.log(`Error while renaming after insert: ${err.message}`);
@@ -559,7 +554,6 @@ watcher.on("add", async (path) => {
         });
       } catch (error) {
         const newFileName = `${failed_folder}/${fileName}`;
-        console.log(newFileName, "newFileName");
         fs.renameSync(path, newFileName, (err) => {
           if (err) {
             console.log(`Error while moving Failed file : ${err.message}`);
@@ -592,9 +586,7 @@ watcher.on("add", async (path) => {
         const table = "transaksi_sales";
         const truncateQuery = `TRUNCATE TABLE ${table}`;
         await poolToSimpi.query(truncateQuery);
-        console.log("1", path);
         rl.on("line", async (line) => {
-          console.log(line, "rowCount");
           rowCount++;
           const data = parseCSVLine(line); // Implement this function to parse CSV lines
           batchRows.push(data);
@@ -610,16 +602,16 @@ watcher.on("add", async (path) => {
             // await insertBulkData(batchRows, table);
             await insertOrUpdateDataDofo(batchRows, table, poolToSimpi);
           }
-          const newFileName = `${success_folder}/${fileName}`;
-          fs.rename(path, newFileName, (err) => {
-            if (err) {
-              console.log(`Error while renaming after insert: ${err.message}`);
-            } else {
-              console.log(
-                `Succeed to process and moved file to: ${newFileName}`
-              );
-            }
-          });
+          // const newFileName = `${success_folder}/${fileName}`;
+          // fs.rename(path, newFileName, (err) => {
+          //   if (err) {
+          //     console.log(`Error while renaming after insert: ${err.message}`);
+          //   } else {
+          //     console.log(
+          //       `Succeed to process and moved file to: ${newFileName}`
+          //     );
+          //   }
+          // });
           console.log("close");
         });
 
