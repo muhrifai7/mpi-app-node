@@ -549,6 +549,7 @@ watcher.on("add", async (path) => {
           );
         }
         const newFileName = `${success_folder}/${fileName}`;
+        console.log(newFileName, "suceess");
         fs.rename(path, newFileName, (err) => {
           if (err) {
             console.log(`Error while renaming after insert: ${err.message}`);
@@ -558,6 +559,7 @@ watcher.on("add", async (path) => {
         });
       } catch (error) {
         const newFileName = `${failed_folder}/${fileName}`;
+        console.log(newFileName, "newFileName");
         fs.renameSync(path, newFileName, (err) => {
           if (err) {
             console.log(`Error while moving Failed file : ${err.message}`);
@@ -592,7 +594,7 @@ watcher.on("add", async (path) => {
         await poolToSimpi.query(truncateQuery);
         console.log("1", path);
         rl.on("line", async (line) => {
-          console.log(rowCount, "rowCount");
+          console.log(line, "rowCount");
           rowCount++;
           const data = parseCSVLine(line); // Implement this function to parse CSV lines
           batchRows.push(data);
