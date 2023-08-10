@@ -33,6 +33,7 @@ const insertOrUpdateDataOutlet = async (
       `SELECT id FROM ${table} WHERE outletSiteNumber = ?`,
       [outletSiteNumber]
     );
+    console.log(checkExist, "checkExist");
     if (checkExist && checkExist[0].length > 0) {
       // Outlet exists, so update the data in m_outlet
       const outletId = checkExist[0][0].id;
@@ -377,6 +378,7 @@ const insertOrUpdateDataDofoProblemServer = async (
 
     console.log(`Data inserted into table ${table} successfully!`);
   } catch (err) {
+    await poolToSimpi.query("ROLLBACK");
     console.log(err, "err");
     throw err;
   }
@@ -454,6 +456,7 @@ watcher.on("add", async (path) => {
         const sheet = workbook.SheetNames[0];
         const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
         const table = "m_outlet";
+        console.log(csvData, "csvData");
         for (const data of csvData) {
           await insertOrUpdateDataOutlet(
             data,
@@ -537,23 +540,28 @@ watcher.on("add", async (path) => {
         await poolToSimpi.query(truncateQuery);
         await insertOrUpdateDataDofo(csvData, table, poolToSimpi);
         const newFileName = `${success_folder}/${fileName}`;
-        fs.rename(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while renaming after insert: ${err.message}`);
-          } else {
-            console.log(`Succeed to process and moved file to: ${newFileName}`);
-          }
+        await new Promise((resolve, reject) => {
+          fs.rename(path, newFileName, (err) => {
+            if (err) {
+              console.log(`Error while renaming after insert: ${err.message}`);
+              reject(err);
+            } else {
+              console.log(
+                `Succeed to process and moved file to: ${newFileName}`
+              );
+              resolve();
+            }
+          });
         });
       } catch (error) {
         console.log(error, "error'");
         const newFileName = `${failed_folder}/${fileName}`;
-        fs.renameSync(path, newFileName, (err) => {
-          if (err) {
-            console.log(`Error while moving Failed file : ${err.message}`);
-          } else {
-            console.log(`Failed to process and moved file to: ${newFileName}`);
-          }
-        });
+        try {
+          await fs.promises.rename(path, newFileName);
+          console.log(`Failed to process and moved file to: ${newFileName}`);
+        } catch (err) {
+          console.log(`Error while moving Failed file : ${err.message}`);
+        }
       }
     }, 800);
   }
