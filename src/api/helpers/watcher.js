@@ -386,7 +386,7 @@ const insertOrUpdateDataDofoProblemServer = async (
 
 const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
   try {
-    const batchSize = 10000;
+    const batchSize = 1000;
     const insertQuery = `INSERT INTO ${table} (
       NO_PERFORMA,
       TGL_INVOICE,
