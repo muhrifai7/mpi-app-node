@@ -384,7 +384,7 @@ const insertOrUpdateDataDofoProblemServer = async (
   }
 };
 
-const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
+const insertOrUpdateDataDofoTEST = async (data, table, poolToSimpi) => {
   try {
     const batchSize = 1000;
     const insertQuery = `INSERT INTO ${table} (
@@ -438,6 +438,57 @@ const insertOrUpdateDataDofo = async (data, table, poolToSimpi) => {
   } catch (err) {
     console.log(err, "err");
     // throw new err();
+  }
+};
+
+const insertOrUpdateDataDofoNew = async (
+  data,
+  table,
+  poolToWebDiskon,
+  poolToSimpi
+) => {
+  try {
+    // Outlet does not exist, so insert the data into m_outlet
+    const insertQuery = `INSERT INTO ${table} (
+      NO_PERFORMA,
+      TGL_INVOICE,
+      PERIODE,
+      NO_INVOICE,
+      SITE_NUMBER,
+      PARTY_NAME,
+      DAYS,
+      QTY,
+      KODELANG,
+      SALES,
+      SALES_TYPE
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const insertData = [
+      data.NO_PERFORMA,
+      data.TGL_INVOICE,
+      data.PERIODE,
+      data.NO_INVOICE,
+      data.PARTY_NUMBER,
+      data.PARTY_NAME,
+      data.DAYS,
+      data.QTY,
+      data.KODE_PRODUCT,
+      // PRODUK,
+      // UOM,
+      // HNA,
+      data.SALES,
+      // IDSUP,
+      // NO_FDK,
+      data.SALES_TYPE,
+      // TYPE_ORDER,
+      // ONGKIR,
+      // ATTR1,
+    ];
+
+    await poolToSimpi.query(insertQuery, insertData);
+    console.log(`trx_sales inserted successfully!`);
+  } catch (err) {
+    throw err;
   }
 };
 
@@ -529,7 +580,7 @@ watcher.on("add", async (path) => {
       }
     }, 800);
   }
-  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+  if (fileName.toUpperCase().indexOf("DOFO_SALES_GAGAL") != -1) {
     setTimeout(async () => {
       try {
         const workbook = xlsx.readFile(path, { raw: true });
@@ -639,6 +690,44 @@ watcher.on("add", async (path) => {
             console.log(`Failed to process and moved file to: ${newFileName}`);
           }
         });
+      }
+    }, 800);
+  }
+  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+    setTimeout(async () => {
+      try {
+        const workbook = xlsx.readFile(path, { raw: true });
+        const sheet = workbook.SheetNames[0];
+        const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+        const table = "transaksi_sales";
+        const truncateQuery = `TRUNCATE TABLE ${table}`;
+        await poolToSimpi.query(truncateQuery);
+        for (const data of csvData) {
+          await insertOrUpdateDataDofoNew(
+            data,
+            table,
+            poolToWebDiskon,
+            poolToSimpi
+          );
+        }
+        const newFileName = `${success_folder}/${fileName}`;
+        // fs.rename(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while renaming after insert: ${err.message}`);
+        //   } else {
+        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
+      } catch (error) {
+        console.log(error, "error");
+        const newFileName = `${failed_folder}/${fileName}`;
+        // fs.renameSync(path, newFileName, (err) => {
+        //   if (err) {
+        //     console.log(`Error while moving Failed file : ${err.message}`);
+        //   } else {
+        //     console.log(`Failed to process and moved file to: ${newFileName}`);
+        //   }
+        // });
       }
     }, 800);
   }
