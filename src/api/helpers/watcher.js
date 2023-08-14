@@ -69,8 +69,8 @@ const insertOrUpdateDataOutlet = async (
         data.CUST_ID,
         data.SIA,
         data.SIPA,
-        data.EDOUT,
-        data.EDSIPA,
+        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YY-MM-DD") : "",
+        data.EDSIPA ? moment(data.EDSIPA, "DD/MM/YYYY").format("YY-MM-DD") : "",
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
@@ -119,12 +119,13 @@ const insertOrUpdateDataOutlet = async (
         data.CUST_ID,
         data.SIA,
         data.SIPA,
-        data.EDOUT,
-        data.EDSIPA,
+        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YY-MM-DD") : "",
+        data.EDSIPA ? moment(data.EDSIPA, "DD/MM/YYYY").format("YY-MM-DD") : "",
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
       ];
+      console.log(insertData, "insertData 1", data);
       await poolToSimpi.query(insertQuery, insertData);
       console.log(
         `Simpi Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
