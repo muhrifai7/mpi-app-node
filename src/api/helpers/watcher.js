@@ -33,7 +33,6 @@ const insertOrUpdateDataOutlet = async (
       `SELECT id FROM ${table} WHERE outletSiteNumber = ?`,
       [outletSiteNumber]
     );
-    console.log(checkExist, "checkExist");
     if (checkExist && checkExist[0].length > 0) {
       // Outlet exists, so update the data in m_outlet
       const outletId = checkExist[0][0].id;
@@ -47,7 +46,14 @@ const insertOrUpdateDataOutlet = async (
         outletCodeColl = ?,
         outletCity = ?,
         tax_code = ?,
-        outletCustNumber = ?
+        outletCustNumber = ?,
+        sia = ?,
+        sipa = ?,
+        edout = ?,
+        edsipa = ?,
+        GroupOutlet = ?,
+        telepone = ?,
+        email = ?
             WHERE id = ?`;
 
       const updateData = [
@@ -61,11 +67,18 @@ const insertOrUpdateDataOutlet = async (
         data.OUTLETCITY,
         data.TAX_CODE,
         data.CUST_ID,
+        data.SIA,
+        data.SIPA,
+        data.EDOUT,
+        data.EDSIPA,
+        data.GROUP_OUTLET,
+        data.TELEPON,
+        data.EMAIL,
         outletId,
       ];
       await poolToSimpi.query(updateQuery, updateData);
       console.log(
-        `Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
+        `Simpi Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
       );
     } else {
       // Outlet does not exist, so insert the data into m_outlet
@@ -78,9 +91,20 @@ const insertOrUpdateDataOutlet = async (
         outletAlamat,
         outletCodeColl,
         outletCity,
-        tax_code = ?,
-        outletCustNumber
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        tax_code,
+        outletCustNumber,
+        sia,
+        sipa,
+        edout,
+        edsipa,
+        GroupOutlet,
+        telepone,
+        email
+          ) VALUES (?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?
+                    )`;
 
       const insertData = [
         data.OUTLETSITENUMBER,
@@ -93,11 +117,17 @@ const insertOrUpdateDataOutlet = async (
         data.OUTLETCITY,
         data.TAX_CODE,
         data.CUST_ID,
+        data.SIA,
+        data.SIPA,
+        data.EDOUT,
+        data.EDSIPA,
+        data.GROUP_OUTLET,
+        data.TELEPON,
+        data.EMAIL,
       ];
-      console.log(insertData, "insertData 1");
       await poolToSimpi.query(insertQuery, insertData);
       console.log(
-        `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
+        `Simpi Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
       );
     }
 
@@ -140,10 +170,9 @@ const insertOrUpdateDataOutlet = async (
 
       let result = await poolToWebDiskon.query(updateQueryDiskon, updateData);
       console.log(
-        `Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
+        `Diskon Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
       );
     } else {
-      console.log("elssse");
       const insertData = [
         data.OUTLETSITENUMBER,
         data.BRANCHID,
@@ -166,7 +195,7 @@ const insertOrUpdateDataOutlet = async (
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
       await poolToWebDiskon.query(insertQueryDiskon, insertData);
       console.log(
-        `Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
+        `Diskon Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
       );
     }
   } catch (err) {
