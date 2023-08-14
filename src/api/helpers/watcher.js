@@ -46,6 +46,7 @@ const insertOrUpdateDataOutlet = async (
         outletAlamat = ?,
         outletCodeColl = ?,
         outletCity = ?,
+        tax_code = ?,
         outletCustNumber = ?
             WHERE id = ?`;
 
@@ -58,6 +59,7 @@ const insertOrUpdateDataOutlet = async (
         data.OUTLETALAMAT,
         data.OUTLETCODECOLL,
         data.OUTLETCITY,
+        data.TAX_CODE,
         data.CUST_ID,
         outletId,
       ];
@@ -76,8 +78,9 @@ const insertOrUpdateDataOutlet = async (
         outletAlamat,
         outletCodeColl,
         outletCity,
+        tax_code = ?,
         outletCustNumber
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       const insertData = [
         data.OUTLETSITENUMBER,
@@ -88,6 +91,7 @@ const insertOrUpdateDataOutlet = async (
         data.OUTLETALAMAT,
         data.OUTLETCODECOLL,
         data.OUTLETCITY,
+        data.TAX_CODE,
         data.CUST_ID,
       ];
       console.log(insertData, "insertData 1");
