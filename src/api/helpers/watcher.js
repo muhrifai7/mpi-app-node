@@ -722,23 +722,23 @@ watcher.on("add", async (path) => {
           );
         }
         const newFileName = `${success_folder}/${fileName}`;
-        // fs.rename(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while renaming after insert: ${err.message}`);
-        //   } else {
-        //     console.log(`Succeed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
       } catch (error) {
         console.log(error, "error");
-        // const newFileName = `${failed_folder}/${fileName}`;
-        // fs.renameSync(path, newFileName, (err) => {
-        //   if (err) {
-        //     console.log(`Error while moving Failed file : ${err.message}`);
-        //   } else {
-        //     console.log(`Failed to process and moved file to: ${newFileName}`);
-        //   }
-        // });
+        const newFileName = `${failed_folder}/${fileName}`;
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
       }
     }, 800);
   }
