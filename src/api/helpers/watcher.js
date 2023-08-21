@@ -69,8 +69,10 @@ const insertOrUpdateDataOutlet = async (
         data.CUST_ID,
         data.SIA,
         data.SIPA,
-        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YY-MM-DD") : "",
-        data.EDSIPA ? moment(data.EDSIPA, "DD/MM/YYYY").format("YY-MM-DD") : "",
+        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YYYY-MM-DD") : "",
+        data.EDSIPA
+          ? moment(data.EDSIPA, "DD/MM/YYYY").format("YYYY-MM-DD")
+          : "",
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
@@ -119,8 +121,10 @@ const insertOrUpdateDataOutlet = async (
         data.CUST_ID,
         data.SIA,
         data.SIPA,
-        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YY-MM-DD") : "",
-        data.EDSIPA ? moment(data.EDSIPA, "DD/MM/YYYY").format("YY-MM-DD") : "",
+        data.EDOUT ? moment(data.EDOUT, "DD/MM/YYYY").format("YYYY-MM-DD") : "",
+        data.EDSIPA
+          ? moment(data.EDSIPA, "DD/MM/YYYY").format("YYYY-MM-DD")
+          : "",
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
@@ -517,7 +521,6 @@ watcher.on("add", async (path) => {
         const sheet = workbook.SheetNames[0];
         const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
         const table = "m_outlet";
-        console.log(csvData, "csvData");
         for (const data of csvData) {
           await insertOrUpdateDataOutlet(
             data,
@@ -527,20 +530,13 @@ watcher.on("add", async (path) => {
           );
         }
         const newFileName = `${success_folder}/${fileName}`;
-        console.log(newFileName, "newFileName");
-        if (fs.existsSync(path)) {
-          fs.rename(path, newFileName, (err) => {
-            if (err) {
-              console.log(`Error while renaming after insert: ${err.message}`);
-            } else {
-              console.log(
-                `Succeed to process and moved file to: ${newFileName}`
-              );
-            }
-          });
-        } else {
-          console.log(`Error: The file ${path} does not exist.`);
-        }
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
       } catch (error) {
         console.log(error, "error");
         const newFileName = `${failed_folder}/${fileName}`;
