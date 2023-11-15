@@ -54,7 +54,10 @@ const insertOrUpdateDataOutlet = async (
         edsipa = ?,
         GroupOutlet = ?,
         telepone = ?,
-        email = ?
+        email = ?,
+        npwp = ?,
+        nama_npwp = ?,
+        alamat_npwp = ?
             WHERE id = ?`;
 
       const updateData = [
@@ -77,6 +80,9 @@ const insertOrUpdateDataOutlet = async (
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
+        data?.NPWP,
+        data?.NAMA_NPWP,
+        data?.ALAMAT_NPWP,
         outletId,
       ];
       await poolToSimpi.query(updateQuery, updateData);
@@ -102,11 +108,14 @@ const insertOrUpdateDataOutlet = async (
         edsipa,
         GroupOutlet,
         telepone,
-        email
+        email,
+        npwp,
+        nama_npwp,
+        alamat_npwp
           ) VALUES (?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
-                    ?, ?
+                    ?, ?, ?, ?, ?
                     )`;
 
       const insertData = [
@@ -129,6 +138,9 @@ const insertOrUpdateDataOutlet = async (
         data.GROUP_OUTLET,
         data.TELEPON,
         data.EMAIL,
+        data?.NPWP,
+        data?.NAMA_NPWP,
+        data?.ALAMAT_NPWP,
       ];
       console.log(insertData, "insertData 1", data);
       await poolToSimpi.query(insertQuery, insertData);
@@ -173,8 +185,10 @@ const insertOrUpdateDataOutlet = async (
         partySiteId = ?,
         siteNumberRefrences = ?
             WHERE outlet_id = ?`;
-
-      let result = await poolToWebDiskon.query(updateQueryDiskon, updateData);
+      if (data.OUTLETSITENUMBER == "72172") {
+        console.log(updateData, "updateData");
+      }
+      await poolToWebDiskon.query(updateQueryDiskon, updateData);
       console.log(
         `Diskon Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
       );
@@ -748,9 +762,7 @@ watcher.on("add", async (path) => {
         // const table = "m_outlet";
         for (const data of csvData) {
           if (data.RESERVATION_ID) {
-            await deleteCycleCount(
-              data.RESERVATION_ID
-            );
+            await deleteCycleCount(data.RESERVATION_ID);
           }
         }
         const newFileName = `${success_folder}/${fileName}`;
