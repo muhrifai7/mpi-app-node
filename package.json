@@ -5,10 +5,10 @@
   "description": "node js for mpi project",
   "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/app.js",
-    "watcher": "node --max-old-space-size=8192 src/api/helpers/watcher.js",
-    "dev": "concurrently \"npm run start\" \"npm run watcher\""
+    "start": "pm2 start src/app.js --name my-app",
+    "watcher": "pm2 start src/api/helpers/watcher.js --name watcher",
+    "dev": "concurrently \"npm run start\" \"npm run watcher\"",
+    "prod": "npm run watcher"
   },
   "author": "",
   "license": "ISC",
