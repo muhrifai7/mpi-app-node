@@ -2,15 +2,17 @@
 import fs from "node:fs/promises";
 import path from "path";
 import schedule from "node-schedule";
+import dotenv from "dotenv";
+dotenv.config();
 
 const root_folder = process.env.SOURCE_FILE;
 const processedpath = process.env.PROCCESSED_FILE;
 const success_folder = `${root_folder}/${processedpath}`;
-
+console.log(success_folder, "success_folder", process.env.SECHEDULER_DELETE);
 const ext = ["csv"];
 // remove file at 0 cloack
 // import sql server to simpi every
-const periods = ["0 0 * * *", "0 3 * * * "];
+const periods = [process.env.SECHEDULER_DELETE, "0 3 * * * "];
 // function ini jalan setiap jam 1 pagi, untuk mengapus file dengan masa 1 hari
 const removeOldFile = schedule.scheduleJob(periods[0], async () => {
   const second = 60 * 60 * 30;
