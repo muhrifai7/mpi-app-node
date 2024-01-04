@@ -9,6 +9,7 @@ import { upsertDataOutlet } from "../controllers/outlet/upsertDataOutlet.js";
 import { upsertDataItem } from "../controllers/item/upsertDataItem.js";
 import { batchInsertDataDofo } from "../controllers/dofo/transaksi.js";
 import { parseCSVLine } from "./parseCsv.js";
+import { parseCSVLineNew } from "./parseCsvNew.js";
 
 const root_folder = process.env.SOURCE_FILE;
 const upload_path = process.env.UPLOAD_PATH;
@@ -93,10 +94,9 @@ watcher.on("add", async (path) => {
     }, 800);
   }
   // bulk insert
-  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+  if (fileName.toUpperCase().indexOf("DOFO_SALES_GAGAL") != -1) {
     setTimeout(async () => {
       try {
-        console.log("Reading dofo sales started");
         const readStream = fs.createReadStream(path, {
           encoding: "utf8",
           highWaterMark: 256 * 1024, // Set the buffer size to 64 KB (adjust as needed)
@@ -111,7 +111,7 @@ watcher.on("add", async (path) => {
         await poolToSimpi.query(truncateQuery);
         let isFirstLine = true;
         rl.on("line", async (line) => {
-          const data = parseCSVLine(line, isFirstLine);
+          const data = parseCSVLineNew(line, isFirstLine);
           isFirstLine = false;
           await batchInsertDataDofo(data, table, poolToSimpi);
         });
@@ -155,6 +155,39 @@ watcher.on("add", async (path) => {
         });
       }
     }, 1000);
+  }
+  if (fileName.toUpperCase().indexOf("DOFO_SALES") != -1) {
+    setTimeout(async () => {
+      try {
+        console.log("Reading dofo sales started new");
+        const workbook = xlsx.readFile(path, { raw: true });
+        const sheet = workbook.SheetNames[0];
+        const csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+        const table = "transaksi_sales";
+        const truncateQuery = `TRUNCATE TABLE ${table}`;
+        await poolToSimpi.query(truncateQuery);
+        for (const data of csvData) {
+          await batchInsertDataDofo(data, table, poolToSimpi);
+        }
+        const newFileName = `${success_folder}/${fileName}`;
+        fs.rename(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while renaming after insert: ${err.message}`);
+          } else {
+            console.log(`Succeed to process and moved file to: ${newFileName}`);
+          }
+        });
+      } catch (error) {
+        const newFileName = `${failed_folder}/${fileName}`;
+        fs.renameSync(path, newFileName, (err) => {
+          if (err) {
+            console.log(`Error while moving Failed file : ${err.message}`);
+          } else {
+            console.log(`Failed to process and moved file to: ${newFileName}`);
+          }
+        });
+      }
+    }, 800);
   }
   if (fileName.toUpperCase().indexOf("CYCLE_COUNT") != -1) {
     setTimeout(async () => {
