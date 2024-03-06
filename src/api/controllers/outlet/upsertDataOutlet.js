@@ -148,6 +148,7 @@ export const upsertDataOutlet = async (
         data.CUSTOMERNUMBER,
         data.PARTYSITEID,
         data.REFERENCESITENUMBER,
+        data.SITE_MEPRO,
         outlet_id,
       ];
       const updateQueryDiskon = `UPDATE ${table} SET
@@ -162,11 +163,10 @@ export const upsertDataOutlet = async (
           cust_id = ?,
           customerNumber = ?,
           partySiteId = ?,
-          siteNumberRefrences = ?
+          siteNumberRefrences = ?,
+          site_mepro = ?
               WHERE outlet_id = ?`;
-      if (data.OUTLETSITENUMBER == "72172") {
-        console.log(updateData, "updateData");
-      }
+
       await poolToWebDiskon.query(updateQueryDiskon, updateData);
       console.log(
         `Diskon Outlet with outletSiteNumber ${outletSiteNumber} updated successfully!`
@@ -181,6 +181,7 @@ export const upsertDataOutlet = async (
         data.CUSTOMERNUMBER,
         data.OUTLETALAMAT,
         data.PARTYSITEID,
+        data.SITE_MEPRO,
       ];
       const insertQueryDiskon = `INSERT INTO ${table} (
           outletSiteNumber,
@@ -190,8 +191,9 @@ export const upsertDataOutlet = async (
           outletPelanggan,
           customerNumber,
           outletAlamat,
-          partySiteId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+          partySiteId,
+          site_mepro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       await poolToWebDiskon.query(insertQueryDiskon, insertData);
       console.log(
         `Diskon Outlet with outletSiteNumber ${outletSiteNumber} inserted successfully!`
