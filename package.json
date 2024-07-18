@@ -1,5 +1,5 @@
 {
-  "name": "mpiapp",
+  "name": "watcher-bizops",
   "version": "1.0.0",
   "type": "module",
   "description": "node js for mpi project",

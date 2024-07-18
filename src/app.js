@@ -3,7 +3,7 @@ import routes from "./api/routes/index.js";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3003;
 import "./api/helpers/scheduler.js";
 
 // Middleware to parse incoming JSON data
