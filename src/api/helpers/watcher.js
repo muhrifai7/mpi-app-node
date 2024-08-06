@@ -63,7 +63,7 @@ watcher.on("add", async (path) => {
       }
     }, 800);
   }
-  if (fileName.toUpperCase().indexOf("M_ITEM") != -1) {
+  if (fileName.toUpperCase().indexOf("ITEM_WEB_NEW") != -1) {
     setTimeout(async () => {
       try {
         const workbook = xlsx.readFile(path, { raw: true });

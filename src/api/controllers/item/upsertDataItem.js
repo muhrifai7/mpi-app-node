@@ -7,38 +7,46 @@ export const upsertDataItem = async (
   poolToSimpi
 ) => {
   try {
-    console.log(data, "data");
-    const itemInventoryItemId = data.INVENTORY_ITEM_ID;
+    const itemInventoryItemId = data.ITEMINVENTORYITEMID;
     // Check if the outlet already exists in the database based on the outletSiteNumber
     const checkExist = await poolToSimpi.query(
       `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
       [itemInventoryItemId]
     );
-    console.log(checkExist, "checkExist");
     if (checkExist && checkExist[0].length > 0) {
       // Outlet exists, so update the data in m_outlet
       const updateQuery = `UPDATE ${table} SET
-        itemInventoryItemId = ?,
+        itemCode = ?,
         itemSupId = ?,
         itemProduk = ?,
         itemUom = ?,
-        itemSatuanKecil = ?,
         itemClassProduk = ?,
+        itemSatuanKecil = ?,
+        itemClassName = ?,
         itemIDprinc = ?,
         itemHna = ?,
-        itemClassName = ?
+        itemLogoObat = ?,
+        itemKdOtc = ?,
+        itemType = ?,
+        type = ?,
+        type_code = ?
               WHERE itemInventoryItemId = ?`;
 
       const updateData = [
-        data.INVENTORY_ITEM_ID,
-        data.SUPLIER_ID,
-        data.PRODUK,
-        data.UOM,
-        data.SATUAN_KECIL,
-        data.CLASS_PROD,
-        data.PRINCIPAL,
-        data.HNA,
-        data.CLASS_NAME,
+        data.ITEMCODE,
+        data.ITEMSUPID,
+        data.ITEMPRODUK,
+        data.ITEMUOM,
+        data.ITEMCLASSPROD,
+        data.ITEMSATUANKECIL,
+        data.ITEMCLASSNAME,
+        data.ITEMIDPRINC,
+        data.ITEMHNA,
+        data.ITEMLOGOOBAT,
+        data.ITEMKDOTC,
+        data.ITEMTYPE,
+        data.TYPE,
+        data.TYPE_CODE,
         itemInventoryItemId,
       ];
 
@@ -54,96 +62,44 @@ export const upsertDataItem = async (
           itemSupId,
           itemProduk,
           itemUom,
-          itemSatuanKecil,
           itemClassProduk,
-          itemIDprinc,
+          itemSatuanKecil,
           itemClassName,
-          itemHna
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          itemIDprinc,
+          itemHna,
+          itemLogoObat,
+          itemKdOtc,
+          itemType,
+          type,
+          type_code
+            ) VALUES (?, ?, ?, ?, ?,
+                      ?, ?, ?, ?, ?,
+                      ?, ?, ?, ?, ?)`;
 
       const insertData = [
-        data.INVENTORY_ITEM_ID,
-        data.ITEM,
-        data.SUPLIER_ID,
-        data.PRODUK,
-        data.UOM,
-        data.SATUAN_KECIL,
-        data.CLASS_PROD,
-        data.PRINCIPAL,
-        data.CLASS_NAME,
-        data.HNA,
+        data.ITEMINVENTORYITEMID,
+        data.ITEMCODE,
+        data.ITEMSUPID,
+        data.ITEMPRODUK,
+        data.ITEMUOM,
+        data.ITEMCLASSPROD,
+        data.ITEMSATUANKECIL,
+        data.ITEMCLASSNAME,
+        data.ITEMIDPRINC,
+        data.ITEMHNA,
+        data.ITEMLOGOOBAT,
+        data.ITEMKDOTC,
+        data.ITEMTYPE,
+        data.TYPE,
+        data.TYPE_CODE,
       ];
+      console.log(insertData, "insertData");
 
       await poolToSimpi.query(insertQuery, insertData);
       console.log(
         `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
       );
     }
-    console.log("success item");
-    // const checkExistDbDiskon = await poolToWebDiskon.query(
-    //   `SELECT itemInventoryItemId FROM ${table} WHERE itemInventoryItemId = ?`,
-    //   [itemInventoryItemId]
-    // );
-    // if (checkExistDbDiskon && checkExistDbDiskon[0].length > 0) {
-    //   // Outlet exists, so update the data in m_outlet
-    //   const updateQuery = `UPDATE ${table} SET
-    //     itemInventoryItemId = ?,
-    //     itemSupId = ?,
-    //     itemProduk = ?,
-    //     itemUom = ?,
-    //     itemSatuanKecil = ?,
-    //     itemClassProduk = ?,
-    //     itemIDprinc = ?,
-    //     itemClassName = ?
-    //           WHERE itemInventoryItemId = ?`;
-
-    //   const updateData = [
-    //     data.INVENTORY_ITEM_ID,
-    //     data.SUPLIER_ID,
-    //     data.PRODUK,
-    //     data.UOM,
-    //     data.SATUAN_KECIL,
-    //     data.CLASS_PROD,
-    //     data.PRINCIPAL,
-    //     data.CLASS_NAME,
-    //     itemInventoryItemId,
-    //   ];
-
-    //   await poolToWebDiskon.query(updateQuery, updateData);
-    //   console.log(
-    //     `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} updated successfully!`
-    //   );
-    // } else {
-    //   // Outlet does not exist, so insert the data into m_outlet
-    //   const insertQuery = `INSERT INTO ${table} (
-    //       itemInventoryItemId,
-    //       itemCode,
-    //       itemSupId,
-    //       itemProduk,
-    //       itemUom,
-    //       itemSatuanKecil,
-    //       itemClassProduk,
-    //       itemIDprinc,
-    //       itemClassName
-    //         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    //   const insertData = [
-    //     data.INVENTORY_ITEM_ID,
-    //     data.ITEM,
-    //     data.SUPLIER_ID,
-    //     data.PRODUK,
-    //     data.UOM,
-    //     data.SATUAN_KECIL,
-    //     data.CLASS_PROD,
-    //     data.PRINCIPAL,
-    //     data.CLASS_NAME,
-    //   ];
-
-    //   await poolToWebDiskon.query(insertQuery, insertData);
-    //   console.log(
-    //     `Outlet with INVENTORY_ITEM_ID ${itemInventoryItemId} inserted successfully!`
-    //   );
-    // }
   } catch (err) {
     console.log(err, "err");
     throw err;
